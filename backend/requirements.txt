@@ -1,0 +1,9 @@
+fastapi
+pydantic
+supabase
+langchain_text_splitters
+google-genai
+PyPDF2
+pinecone
+youtube_transcript_api
+dotenv
