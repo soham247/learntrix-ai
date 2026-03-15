@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers import process, generate, chat
 
+from config import CLIENT_URL
+
 app = FastAPI(title="AI Learning Assistant API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[CLIENT_URL, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
