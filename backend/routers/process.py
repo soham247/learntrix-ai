@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
@@ -13,6 +14,7 @@ from services.chunker import chunk_text
 from services.embeddings import store_embeddings
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class VideoRequest(BaseModel):
@@ -57,8 +59,10 @@ async def process_video(request: VideoRequest):
         }
 
     except ValueError as e:
+        logger.error("Video processing ValueError for URL %s: %s", request.url, e)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.exception("Video processing failed for URL %s", request.url)
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 
@@ -106,6 +110,8 @@ async def process_pdf(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except ValueError as e:
+        logger.error("PDF processing ValueError for file %s: %s", file.filename, e)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.exception("PDF processing failed for file %s", file.filename)
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")

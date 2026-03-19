@@ -52,7 +52,7 @@ export default function HomeForm() {
         {/* Tab Selector */}
         <div className="flex p-1 bg-muted rounded-xl mb-8 border border-border">
           <button
-            onClick={() => setActiveTab("youtube")}
+            onClick={() => { setActiveTab("youtube"); setError(null); }}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === "youtube"
                 ? "bg-background text-foreground shadow-sm"
@@ -62,7 +62,7 @@ export default function HomeForm() {
             <Link className="w-4 h-4" /> YouTube Video
           </button>
           <button
-            onClick={() => setActiveTab("pdf")}
+            onClick={() => { setActiveTab("pdf"); setError(null); }}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === "pdf"
                 ? "bg-background text-foreground shadow-sm"

@@ -1,5 +1,19 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function friendlyVideoError(detail: string): string {
+  const lower = detail.toLowerCase();
+  if (lower.includes("transcript") && (lower.includes("disabled") || lower.includes("not available"))) {
+    return "This video doesn't have captions/subtitles available. Please try a different video.";
+  }
+  if (lower.includes("could not retrieve transcript") || lower.includes("blocked") || lower.includes("429") || lower.includes("too many")) {
+    return "Unable to fetch the transcript right now. YouTube may be temporarily limiting requests. Please try again in a few minutes.";
+  }
+  if (lower.includes("video id") || lower.includes("invalid") || lower.includes("url")) {
+    return "That doesn't look like a valid YouTube URL. Please check and try again.";
+  }
+  return "Something went wrong while processing the video. Please try again later.";
+}
+
 export async function processVideo(url: string) {
   const res = await fetch(`${API_BASE}/process-video`, {
     method: "POST",
@@ -8,7 +22,7 @@ export async function processVideo(url: string) {
   });
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(err.detail || "Failed to process video");
+    throw new Error(friendlyVideoError(err.detail || ""));
   }
   return res.json();
 }
