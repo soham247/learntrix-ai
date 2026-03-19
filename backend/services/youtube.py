@@ -1,6 +1,29 @@
 import re
+import logging
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+from youtube_transcript_api.proxies import WebshareProxyConfig
+
+from config import PROXY_USERNAME, PROXY_PASSWORD
+
+logger = logging.getLogger(__name__)
+
+
+def _create_api() -> YouTubeTranscriptApi:
+    """Create YouTubeTranscriptApi with proxy config if credentials are set."""
+    if PROXY_USERNAME and PROXY_PASSWORD:
+        logger.info("Using Webshare proxy for YouTube transcript requests")
+        proxy_config = WebshareProxyConfig(
+            proxy_username=PROXY_USERNAME,
+            proxy_password=PROXY_PASSWORD,
+        )
+        return YouTubeTranscriptApi(proxy_config=proxy_config)
+    logger.info("No proxy configured — using direct connection")
+    return YouTubeTranscriptApi()
+
+
+# Module-level API instance (reused across requests)
+_api = _create_api()
 
 
 def extract_video_id(url: str) -> str:
@@ -20,7 +43,7 @@ def extract_video_id(url: str) -> str:
 def get_transcript(url: str) -> dict:
     """Fetch transcript from a YouTube video URL (compatible with v1.x API)."""
     video_id = extract_video_id(url)
-    api = YouTubeTranscriptApi()
+    api = _api
 
     # --- Attempt 1: preferred languages directly ---
     try:
