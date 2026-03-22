@@ -10,6 +10,5 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 CLIENT_URL = os.getenv("CLIENT_URL")
 
-# Proxy config for YouTube transcript fetching (to bypass cloud IP blocks)
-PROXY_USERNAME = os.getenv("PROXY_USERNAME", "")
-PROXY_PASSWORD = os.getenv("PROXY_PASSWORD", "")
+# Supadata API for YouTube transcript fetching
+SUPADATA_API_KEY = os.getenv("SUPADATA_API_KEY", "")
