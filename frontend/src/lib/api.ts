@@ -1,23 +1,52 @@
+import { supabase } from "@/lib/supabase";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("You must be signed in to use this feature.");
+  }
+  return {
+    Authorization: `Bearer ${session.access_token}`,
+    "Content-Type": "application/json",
+  };
+}
 
 function friendlyVideoError(detail: string): string {
   const lower = detail.toLowerCase();
-  if (lower.includes("transcript") && (lower.includes("disabled") || lower.includes("not available"))) {
+  if (lower.includes("10 youtube video limit") || lower.includes("reached your")) {
+    return detail; // Already a friendly message from backend
+  }
+  if (
+    lower.includes("transcript") &&
+    (lower.includes("disabled") || lower.includes("not available"))
+  ) {
     return "This video doesn't have captions/subtitles available. Please try a different video.";
   }
-  if (lower.includes("could not retrieve transcript") || lower.includes("blocked") || lower.includes("429") || lower.includes("too many")) {
+  if (
+    lower.includes("could not retrieve transcript") ||
+    lower.includes("blocked") ||
+    lower.includes("429") ||
+    lower.includes("too many")
+  ) {
     return "Unable to fetch the transcript right now. YouTube may be temporarily limiting requests. Please try again in a few minutes.";
   }
-  if (lower.includes("video id") || lower.includes("invalid") || lower.includes("url")) {
+  if (
+    lower.includes("video id") ||
+    lower.includes("invalid") ||
+    lower.includes("url")
+  ) {
     return "That doesn't look like a valid YouTube URL. Please check and try again.";
   }
   return "Something went wrong while processing the video. Please try again later.";
 }
 
 export async function processVideo(url: string) {
+  const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/process-video`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ url }),
   });
   if (!res.ok) {
@@ -28,10 +57,15 @@ export async function processVideo(url: string) {
 }
 
 export async function processPdf(file: File) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("You must be signed in to use this feature.");
+  }
   const formData = new FormData();
   formData.append("file", file);
   const res = await fetch(`${API_BASE}/process-pdf`, {
     method: "POST",
+    headers: { Authorization: `Bearer ${session.access_token}` },
     body: formData,
   });
   if (!res.ok) {
@@ -42,9 +76,10 @@ export async function processPdf(file: File) {
 }
 
 export async function generateFlashcards(sessionId: string) {
+  const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/generate-flashcards`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ session_id: sessionId }),
   });
   if (!res.ok) {
@@ -55,9 +90,10 @@ export async function generateFlashcards(sessionId: string) {
 }
 
 export async function generateQuiz(sessionId: string) {
+  const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/generate-quiz`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ session_id: sessionId }),
   });
   if (!res.ok) {
@@ -79,9 +115,10 @@ export async function chatStream(
   onChunk: (chunk: string) => void,
   onDone: () => void
 ) {
+  const headers = await getAuthHeaders();
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ session_id: sessionId, message, history }),
   });
 
@@ -110,11 +147,9 @@ export async function chatStream(
           return;
         }
         try {
-          // Chunks are JSON-encoded strings from the backend
           const decoded = JSON.parse(data);
           onChunk(decoded);
         } catch {
-          // Fallback: use raw data if not valid JSON
           onChunk(data);
         }
       }

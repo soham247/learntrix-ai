@@ -1,13 +1,12 @@
 import json
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from supabase import create_client
 
-from config import SUPABASE_URL, SUPABASE_KEY
-from services.db import get_supabase
+from services.db import get_supabase_admin
+from services.auth import get_current_user
 from services.rag import chat_stream
 
 router = APIRouter()
@@ -25,14 +24,18 @@ class ChatRequest(BaseModel):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    current_user=Depends(get_current_user),
+):
     """RAG-based chat with streaming response."""
     try:
-        supabase = get_supabase()
-        # Verify session exists
+        supabase = get_supabase_admin()
+
+        # Verify session exists and belongs to this user
         session = (
             supabase.table("sessions")
-            .select("id")
+            .select("id, user_id")
             .eq("id", request.session_id)
             .single()
             .execute()
@@ -40,6 +43,9 @@ async def chat(request: ChatRequest):
 
         if not session.data:
             raise HTTPException(status_code=404, detail="Session not found.")
+
+        if session.data["user_id"] != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Access denied.")
 
         # Save user message to chat history
         supabase.table("chat_history").insert(
@@ -57,7 +63,6 @@ async def chat(request: ChatRequest):
             full_response = ""
             async for chunk in chat_stream(request.session_id, request.message, history):
                 full_response += chunk
-                # JSON-encode the chunk so newlines and special chars survive SSE transport
                 yield f"data: {json.dumps(chunk)}\n\n"
 
             # Save assistant response to chat history

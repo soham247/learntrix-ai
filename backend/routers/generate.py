@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from supabase import create_client
 
-from config import SUPABASE_URL, SUPABASE_KEY
-from services.db import get_supabase
+from services.db import get_supabase_admin
+from services.auth import get_current_user
 from services.generator import generate_flashcards, generate_quiz
 
 router = APIRouter()
@@ -14,14 +13,16 @@ class GenerateRequest(BaseModel):
 
 
 @router.post("/generate-flashcards")
-async def create_flashcards(request: GenerateRequest):
+async def create_flashcards(
+    request: GenerateRequest,
+    current_user=Depends(get_current_user),
+):
     """Generate flashcards for a session's content."""
     try:
-        supabase = get_supabase()
-        # Get session text from Supabase
+        supabase = get_supabase_admin()
         result = (
             supabase.table("sessions")
-            .select("raw_text, title")
+            .select("raw_text, title, user_id")
             .eq("id", request.session_id)
             .single()
             .execute()
@@ -29,6 +30,9 @@ async def create_flashcards(request: GenerateRequest):
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Session not found.")
+
+        if result.data["user_id"] != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Access denied.")
 
         text = result.data["raw_text"]
         flashcards = generate_flashcards(text)
@@ -47,13 +51,16 @@ async def create_flashcards(request: GenerateRequest):
 
 
 @router.post("/generate-quiz")
-async def create_quiz(request: GenerateRequest):
+async def create_quiz(
+    request: GenerateRequest,
+    current_user=Depends(get_current_user),
+):
     """Generate quiz questions for a session's content."""
     try:
-        supabase = get_supabase()
+        supabase = get_supabase_admin()
         result = (
             supabase.table("sessions")
-            .select("raw_text, title")
+            .select("raw_text, title, user_id")
             .eq("id", request.session_id)
             .single()
             .execute()
@@ -61,6 +68,9 @@ async def create_quiz(request: GenerateRequest):
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Session not found.")
+
+        if result.data["user_id"] != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Access denied.")
 
         text = result.data["raw_text"]
         quiz = generate_quiz(text)

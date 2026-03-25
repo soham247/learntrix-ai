@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import Providers from "@/components/providers/providers";
+import { AuthProvider } from "@/components/providers/auth-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,10 +40,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
-            <Suspense>
-              <Navbar />
-            </Suspense>
-            <main className="min-h-screen pt-28 pb-12">{children}</main>
+            <AuthProvider>
+              <Suspense>
+                <Navbar />
+              </Suspense>
+              <main className="min-h-screen pt-28 pb-12">{children}</main>
+            </AuthProvider>
           </Providers>
         </ThemeProvider>
       </body>
