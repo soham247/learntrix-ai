@@ -13,10 +13,8 @@ export function middleware(request: NextRequest) {
 
   if (!isProtected) return NextResponse.next();
 
-  // Check for Supabase auth token in cookies (set by @supabase/supabase-js)
-  // The cookie name uses the project ref from the URL
   const hasSession = request.cookies.getAll().some(
-    (c) => c.name.startsWith("sb-") && c.name.endsWith("-auth-token")
+    (c) => c.name.startsWith("sb-") && c.name.includes("-auth-token")
   );
 
   if (!hasSession) {
