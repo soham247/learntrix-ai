@@ -4,12 +4,12 @@ Learntrix is an AI-powered learning assistant that converts YouTube videos and P
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router) + TailwindCSS
+- **Frontend**: Next.js 16 (App Router) + TailwindCSS
 - **Backend**: Python (FastAPI)
 - **Database**: Supabase (PostgreSQL)
 - **Vector Store**: Pinecone
-- **AI Model**: Google Gemini 1.5 Flash
-- **Embeddings**: Gemini Embedding-001
+- **AI Model**: gemini-2.5-flash-lite
+- **Embeddings**: gemini-embedding-001
 
 ## Features
 
@@ -52,16 +52,6 @@ venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 ```
 
-Create `backend/.env`:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-PINECONE_API_KEY=your_pinecone_api_key
-PINECONE_INDEX_NAME=learning-assistant
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_supabase_service_role_key
-```
-
 Start the server:
 
 ```bash
@@ -93,24 +83,3 @@ Visit **http://localhost:3000**
 | POST   | `/generate-quiz`       | Generate quiz questions for a session |
 | POST   | `/chat`                | RAG chat with streaming response      |
 | GET    | `/health`              | Health check                          |
-
-## Project Structure
-
-```
-learntrix/
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── app/            # App Router pages
-│   │   ├── components/     # Reusable UI components
-│   │   └── lib/            # API client
-│   └── ...
-├── backend/                # FastAPI backend
-│   ├── main.py             # App entry point
-│   ├── config.py           # Environment config
-│   ├── routers/            # API route handlers
-│   ├── services/           # Business logic
-│   └── requirements.txt
-├── supabase/
-│   └── migration.sql       # Database schema
-└── README.md
-```
